@@ -7,6 +7,6 @@ import (
 )
 
 func TestParseOut(t *testing.T) {
-	m := ParseOutMonth(time.Now(), time.Now().Add(35*24*time.Hour))
+	m := ParseOut(time.Now(), time.Now().Add(35*24*time.Hour), TypeWeek)
 	fmt.Println(m)
 }
