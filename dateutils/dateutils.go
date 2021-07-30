@@ -42,6 +42,8 @@ func ParseOut(startTime time.Time, endTime time.Time, parseOutType ParseOutType,
 		ret = parseOutMonth(startTime, endTime)
 	case TypeWeek:
 		ret = parseOutWeek(startTime, endTime)
+	case TypeDay:
+		ret = parseOutDay(startTime, endTime)
 	}
 	return ret
 }
@@ -96,6 +98,47 @@ func parseOutWeek(startTime time.Time, endTime time.Time) (ret *Result) {
 		describe = append(describe, dd)
 
 		tmpStart = tmpStart.AddDate(0, 0, 7)
+		if tmpStart.Unix() >= end.Unix() {
+			break
+		}
+	}
+
+	ret.List = list
+	ret.Describe = describe
+
+	return
+}
+
+func parseOutDay(startTime time.Time, endTime time.Time) (ret *Result) {
+	ret = &Result{}
+	list := make([]string, 0, 60)
+	describe := make([]DurationDate, 0, 60)
+
+	start := startTime
+	timeStr := start.Format("2006-01-02")
+	start, _ = time.Parse("2006-01-02", timeStr)
+
+	end := endTime
+	endStr := end.Format("2006-01-02")
+	end, _ = time.Parse("2006-01-02", endStr)
+
+	ret.StartDate = start.Format(timeutils.Template)
+	ret.EndDate = end.Format(timeutils.Template)
+
+	tmpStart := start
+	for {
+		tmpFormat := tmpStart.Format("2006-01-02")
+		tmpEnd := tmpStart.AddDate(0, 0, +1).Add(-1)
+
+		dd := DurationDate{
+			StartDate: tmpStart.Format(timeutils.Template),
+			EndDate:   tmpEnd.Format(timeutils.Template),
+		}
+
+		list = append(list, tmpFormat)
+		describe = append(describe, dd)
+
+		tmpStart = tmpStart.AddDate(0, 0, 1)
 		if tmpStart.Unix() >= end.Unix() {
 			break
 		}
