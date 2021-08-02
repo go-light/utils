@@ -78,7 +78,10 @@ func parseOutWeek(startTime time.Time, endTime time.Time) (ret *Result) {
 	timeStr := start.Format("2006-01-02")
 	start, _ = time.Parse("2006-01-02", timeStr)
 
-	end := endTime.AddDate(0, 0, -weekdayToNumber[startTime.Weekday().String()]+6)
+	end := endTime.AddDate(0, 0, -weekdayToNumber[startTime.Weekday().String()])
+	endStr := end.Format("2006-01-02")
+	end, _ = time.Parse("2006-01-02", endStr)
+	end = end.Add(24*time.Hour - 1)
 
 	ret.StartDate = start.Format(timeutils.Template)
 	ret.EndDate = end.Format(timeutils.Template)
@@ -98,6 +101,9 @@ func parseOutWeek(startTime time.Time, endTime time.Time) (ret *Result) {
 		describe = append(describe, dd)
 
 		tmpStart = tmpStart.AddDate(0, 0, 7)
+		if tmpEnd == end {
+			break
+		}
 		if tmpStart.Unix() >= end.Unix() {
 			break
 		}
@@ -121,6 +127,7 @@ func parseOutDay(startTime time.Time, endTime time.Time) (ret *Result) {
 	end := endTime
 	endStr := end.Format("2006-01-02")
 	end, _ = time.Parse("2006-01-02", endStr)
+	end = end.Add(24*time.Hour - 1)
 
 	ret.StartDate = start.Format(timeutils.Template)
 	ret.EndDate = end.Format(timeutils.Template)
@@ -139,6 +146,9 @@ func parseOutDay(startTime time.Time, endTime time.Time) (ret *Result) {
 		describe = append(describe, dd)
 
 		tmpStart = tmpStart.AddDate(0, 0, 1)
+		if tmpEnd == end {
+			break
+		}
 		if tmpStart.Unix() >= end.Unix() {
 			break
 		}
@@ -160,6 +170,7 @@ func parseOutMonth(startTime time.Time, endTime time.Time) (ret *Result) {
 
 	year1, month1, _ := endTime.Date()
 	end := time.Date(year1, month1, 1, 23, 59, 59, 0, time.UTC).AddDate(0, 1, -1)
+	end.Add(24*time.Hour - 1)
 
 	ret.StartDate = start.Format(timeutils.Template)
 	ret.EndDate = end.Format(timeutils.Template)
@@ -178,6 +189,9 @@ func parseOutMonth(startTime time.Time, endTime time.Time) (ret *Result) {
 		describe = append(describe, dd)
 
 		tmpStart = tmpStart.AddDate(0, 1, 0)
+		if tmpEnd == end {
+			break
+		}
 		if tmpStart.Unix() >= end.Unix() {
 			break
 		}
