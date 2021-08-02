@@ -41,8 +41,10 @@ func ParseOut(startTime time.Time, endTime time.Time, parseOutType ParseOutType,
 		weekMode: 0,
 	}
 
-	for _, opt := range opts {
-		opt(options)
+	if opts != nil {
+		for _, opt := range opts {
+			opt(options)
+		}
 	}
 
 	dateUtil.opts = options
