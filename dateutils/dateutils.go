@@ -74,13 +74,10 @@ func parseOutWeek(startTime time.Time, endTime time.Time) (ret *Result) {
 	describe := make([]DurationDate, 0, 20)
 
 	start := startTime.AddDate(0, 0, -weekdayToNumber[startTime.Weekday().String()])
+	start, _ = time.Parse("2006-01-02", start.Format("2006-01-02"))
 
-	timeStr := start.Format("2006-01-02")
-	start, _ = time.Parse("2006-01-02", timeStr)
-
-	end := endTime.AddDate(0, 0, -weekdayToNumber[startTime.Weekday().String()])
-	endStr := end.Format("2006-01-02")
-	end, _ = time.Parse("2006-01-02", endStr)
+	end := endTime.AddDate(0, 0, 6-weekdayToNumber[endTime.Weekday().String()])
+	end, _ = time.Parse("2006-01-02", end.Format("2006-01-02"))
 	end = end.Add(24*time.Hour - 1)
 
 	ret.StartDate = start.Format(timeutils.Template)
@@ -121,12 +118,10 @@ func parseOutDay(startTime time.Time, endTime time.Time) (ret *Result) {
 	describe := make([]DurationDate, 0, 60)
 
 	start := startTime
-	timeStr := start.Format("2006-01-02")
-	start, _ = time.Parse("2006-01-02", timeStr)
+	start, _ = time.Parse("2006-01-02", start.Format("2006-01-02"))
 
 	end := endTime
-	endStr := end.Format("2006-01-02")
-	end, _ = time.Parse("2006-01-02", endStr)
+	end, _ = time.Parse("2006-01-02", end.Format("2006-01-02"))
 	end = end.Add(24*time.Hour - 1)
 
 	ret.StartDate = start.Format(timeutils.Template)
