@@ -15,8 +15,15 @@ const (
 )
 
 type DurationDate struct {
-	StartDate string `json:"start_date"`
-	EndDate   string `json:"end_date"`
+	StartTime time.Time `json:"-"`
+	EndTime   time.Time `json:"-"`
+	StartDate string    `json:"start_date"`
+	EndDate   string    `json:"end_date"`
+}
+
+type dateUtil struct {
+	opts         *options
+	parseOutType ParseOutType
 }
 
 type Result struct {
@@ -28,6 +35,8 @@ type Result struct {
 }
 
 func ParseOut(startTime time.Time, endTime time.Time, parseOutType ParseOutType, opts ...Option) (ret *Result) {
+	dateUtil := &dateUtil{}
+
 	options := &options{
 		weekMode: 0,
 	}
@@ -36,12 +45,14 @@ func ParseOut(startTime time.Time, endTime time.Time, parseOutType ParseOutType,
 		opt(options)
 	}
 
+	dateUtil.opts = options
+
 	ret = &Result{}
 	switch parseOutType {
 	case TypeMonth:
 		ret = parseOutMonth(startTime, endTime)
 	case TypeWeek:
-		ret = parseOutWeek(startTime, endTime)
+		ret = dateUtil.parseOutWeek(startTime, endTime)
 	case TypeDay:
 		ret = parseOutDay(startTime, endTime)
 	}
@@ -68,7 +79,7 @@ var weekdayToNumber = map[string]int{
 	Saturday:  6,
 }
 
-func parseOutWeek(startTime time.Time, endTime time.Time) (ret *Result) {
+func (du *dateUtil) parseOutWeek(startTime time.Time, endTime time.Time) (ret *Result) {
 	ret = &Result{}
 	list := make([]string, 0, 20)
 	describe := make([]DurationDate, 0, 20)
@@ -80,6 +91,9 @@ func parseOutWeek(startTime time.Time, endTime time.Time) (ret *Result) {
 	end, _ = time.Parse("2006-01-02", end.Format("2006-01-02"))
 	end = end.Add(24*time.Hour - 1)
 
+	start = start.Add(time.Duration((du.opts.weekMode-7)*24) * time.Hour)
+	end = end.Add(time.Duration((du.opts.weekMode-7)*24) * time.Hour).Add(7 * 24 * time.Hour)
+
 	ret.StartDate = start.Format(timeutils.Template)
 	ret.EndDate = end.Format(timeutils.Template)
 
@@ -90,6 +104,8 @@ func parseOutWeek(startTime time.Time, endTime time.Time) (ret *Result) {
 		tmpEnd := tmpStart.AddDate(0, 0, +6).Add(24*time.Hour - 1)
 
 		dd := DurationDate{
+			StartTime: tmpStart,
+			EndTime:   tmpEnd,
 			StartDate: tmpStart.Format(timeutils.Template),
 			EndDate:   tmpEnd.Format(timeutils.Template),
 		}
@@ -98,6 +114,7 @@ func parseOutWeek(startTime time.Time, endTime time.Time) (ret *Result) {
 		describe = append(describe, dd)
 
 		tmpStart = tmpStart.AddDate(0, 0, 7)
+
 		if tmpEnd == end {
 			break
 		}
@@ -108,6 +125,24 @@ func parseOutWeek(startTime time.Time, endTime time.Time) (ret *Result) {
 
 	ret.List = list
 	ret.Describe = describe
+
+	newDescribe := make([]DurationDate, 0, len(ret.Describe))
+	newList := make([]string, 0, len(list))
+	for i, item := range ret.Describe {
+		if item.EndTime.Unix() < startTime.Unix() {
+			continue
+		}
+		if item.StartTime.Unix() > endTime.Unix() {
+			continue
+		}
+		newDescribe = append(newDescribe, item)
+		newList = append(newList, ret.List[i])
+	}
+
+	ret.Describe = newDescribe
+	ret.List = newList
+	ret.StartDate = newDescribe[0].StartDate
+	ret.EndDate = newDescribe[len(newDescribe)-1].EndDate
 
 	return
 }
